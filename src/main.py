@@ -78,6 +78,8 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
 
                 ds_progress.iters_done_report(len(batch))
             logger.info('In dataset {} {} items labeled, {} items not labeled'.format(dataset_info.name, labeled_items_cnt, not_labeled_items_cnt))
+            if len(images) == not_labeled_items_cnt:
+                logger.warn('There are no labeled items in dataset {}'.format(dataset_info.name))
 
     elif project.type == str(sly.ProjectType.VIDEOS):
         key_id_map = KeyIdMap()
@@ -107,6 +109,8 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
             logger.info(
                 'In dataset {} {} items labeled, {} items not labeled'.format(dataset_info.name, labeled_items_cnt,
                                                                               not_labeled_items_cnt))
+            if len(videos) == not_labeled_items_cnt:
+                logger.warn('There are no labeled items in dataset {}'.format(dataset_info.name))
 
     elif project.type == str(sly.ProjectType.POINT_CLOUDS):
         key_id_map = KeyIdMap()
@@ -148,6 +152,8 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
             logger.info(
                 'In dataset {} {} items labeled, {} items not labeled'.format(dataset_info.name, labeled_items_cnt,
                                                                               not_labeled_items_cnt))
+            if len(pointclouds) == not_labeled_items_cnt:
+                logger.warn('There are no labeled items in dataset {}'.format(dataset_info.name))
 
 
     sly.fs.archive_directory(RESULT_ARCHIVE_PATH, RESULT_ARCHIVE)
