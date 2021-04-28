@@ -17,7 +17,7 @@ PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
 RESULT_DIR_NAME = 'export'
 DOWNLOAD_ITEMS = True
 logger = sly.logger
-
+logger.warn('{}'.format(PROJECT_ID))
 
 @my_app.callback("export_only_labeled_items")
 @sly.timeit
