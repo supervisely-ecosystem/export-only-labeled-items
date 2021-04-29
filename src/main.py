@@ -60,7 +60,8 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
                 if DOWNLOAD_ITEMS:
                     batch_imgs_bytes = api.image.download_bytes(dataset_id, image_ids)
                     for name, img_bytes, ann_json in zip(image_names, batch_imgs_bytes, ann_jsons):
-                        if len(ann_json['objects']) == 0 and len(ann_json['tags']) == 0:
+                        ann = sly.Annotation.from_json(ann_json, meta)
+                        if ann.is_empty():
                             not_labeled_items_cnt += 1
                             continue
                         dataset_fs.add_item_raw_bytes(name, img_bytes, ann_json)
@@ -69,7 +70,8 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
                     ann_dir = os.path.join(RESULT_DIR, dataset_info.name, 'ann')
                     sly.fs.mkdir(ann_dir)
                     for image_name, ann_json in zip(image_names, ann_jsons):
-                        if len(ann_json['objects']) == 0 and len(ann_json['tags']) == 0:
+                        ann = sly.Annotation.from_json(ann_json, meta)
+                        if ann.is_empty():
                             not_labeled_items_cnt += 1
                             continue
                         sly.io.json.dump_json_file(ann_json, os.path.join(ann_dir, image_name + '.json'))
@@ -95,14 +97,15 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
                 video_names = [video_info.name for video_info in batch]
                 ann_jsons = api.video.annotation.download_bulk(dataset_info.id, video_ids)
                 for video_id, video_name, ann_json in zip(video_ids, video_names, ann_jsons):
-                    if len(ann_json['objects']) == 0 and len(ann_json['tags']) == 0 and len(ann_json['frames']) == 0:
+                    video_ann = sly.VideoAnnotation.from_json(ann_json, meta, key_id_map)
+                    if video_ann.is_empty():
                         not_labeled_items_cnt += 1
                         continue
                     video_file_path = dataset_fs.generate_item_path(video_name)
                     labeled_items_cnt += 1
                     if DOWNLOAD_ITEMS:
                         api.video.download_path(video_id, video_file_path)
-                    dataset_fs.add_item_file(video_name, video_file_path, ann=VideoAnnotation.from_json(ann_json, project_fs.meta, key_id_map), _validate_item=False)
+                    dataset_fs.add_item_file(video_name, video_file_path, ann=video_ann, _validate_item=False)
 
                 ds_progress.iters_done_report(len(batch))
             logger.info(
@@ -128,7 +131,8 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
                 ann_jsons = api.pointcloud.annotation.download_bulk(dataset_info.id, pointcloud_ids)
 
                 for pointcloud_id, pointcloud_name, ann_json in zip(pointcloud_ids, pointcloud_names, ann_jsons):
-                    if len(ann_json['objects']) == 0 and len(ann_json['tags']) == 0 and len(ann_json['figures']) == 0:
+                    pc_ann = sly.PointcloudAnnotation.from_json(ann_json, meta, key_id_map)
+                    if pc_ann.is_empty():
                         not_labeled_items_cnt += 1
                         continue
                     pointcloud_file_path = dataset_fs.generate_item_path(pointcloud_name)
@@ -145,7 +149,7 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
                             api.pointcloud.download_related_image(rimage_id, path_img)
                             dump_json_file(rimage_info, path_json)
 
-                    dataset_fs.add_item_file(pointcloud_name, pointcloud_file_path, ann=PointcloudAnnotation.from_json(ann_json, project_fs.meta, key_id_map), _validate_item=False)
+                    dataset_fs.add_item_file(pointcloud_name, pointcloud_file_path, ann=pc_ann, _validate_item=False)
 
                 ds_progress.iters_done_report(len(batch))
             logger.info(
@@ -169,6 +173,9 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
                                                 is_size=True))
         upload_progress[0].set_current_value(monitor.bytes_read)
 
+    if api.file.exists(TEAM_ID, remote_archive_path):
+        logger.warn('Archive with name {} already exist in {} folder'.format(ARCHIVE_NAME, RESULT_DIR_NAME))
+        my_app.stop()
     file_info = api.file.upload(TEAM_ID, RESULT_ARCHIVE, remote_archive_path, lambda m: _print_progress(m, upload_progress))
     app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.full_storage_url))
     api.task.set_output_archive(task_id, file_info.id, ARCHIVE_NAME, file_url=file_info.full_storage_url)
