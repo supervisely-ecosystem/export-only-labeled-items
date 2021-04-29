@@ -14,9 +14,15 @@ my_app = sly.AppService()
 TEAM_ID = int(os.environ['context.teamId'])
 WORKSPACE_ID = int(os.environ['context.workspaceId'])
 PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
-DOWNLOAD_ITEMS = bool(util.strtobool(os.environ['modal.state.items']))
 RESULT_DIR_NAME = 'export'
 logger = sly.logger
+
+if os.environ['modal.state.items'] is None:
+    logger.warn('The option to download project is not selected, project will be download with items')
+    DOWNLOAD_ITEMS = True
+else:
+    DOWNLOAD_ITEMS = bool(util.strtobool(os.environ['modal.state.items']))
+
 
 @my_app.callback("export_only_labeled_items")
 @sly.timeit
