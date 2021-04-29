@@ -43,6 +43,10 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
     RESULT_ARCHIVE_PATH = os.path.join(my_app.data_dir, RESULT_DIR_NAME)
     ARCHIVE_NAME = '{}_{}.tar.gz'.format(PROJECT_ID, project_name)
     RESULT_ARCHIVE = os.path.join(my_app.data_dir, ARCHIVE_NAME)
+    remote_archive_path = "/{}/{}".format(RESULT_DIR_NAME, ARCHIVE_NAME)
+    if api.file.exists(TEAM_ID, remote_archive_path):
+        logger.warn('Archive with name {} already exist in {} folder'.format(ARCHIVE_NAME, RESULT_DIR_NAME))
+        my_app.stop()
 
     sly.fs.mkdir(RESULT_DIR)
     app_logger.info("Export folder has been created")
@@ -174,7 +178,6 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
     app_logger.info("Result directory is archived")
 
     upload_progress = []
-    remote_archive_path = "/{}/{}".format(RESULT_DIR_NAME, ARCHIVE_NAME)
 
     def _print_progress(monitor, upload_progress):
         if len(upload_progress) == 0:
@@ -184,9 +187,6 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
                                                 is_size=True))
         upload_progress[0].set_current_value(monitor.bytes_read)
 
-    if api.file.exists(TEAM_ID, remote_archive_path):
-        logger.warn('Archive with name {} already exist in {} folder'.format(ARCHIVE_NAME, RESULT_DIR_NAME))
-        my_app.stop()
     file_info = api.file.upload(TEAM_ID, RESULT_ARCHIVE, remote_archive_path, lambda m: _print_progress(m, upload_progress))
     app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.full_storage_url))
     api.task.set_output_archive(task_id, file_info.id, ARCHIVE_NAME, file_url=file_info.full_storage_url)
