@@ -17,7 +17,9 @@ PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
 RESULT_DIR_NAME = 'export'
 logger = sly.logger
 
-if os.environ['modal.state.items'] is None:
+try:
+    os.environ['modal.state.items']
+except KeyError:
     logger.warn('The option to download project is not selected, project will be download with items')
     DOWNLOAD_ITEMS = True
 else:
