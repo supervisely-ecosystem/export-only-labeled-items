@@ -12,7 +12,7 @@
   "task_location": "workspace_tasks",
   "isolate": true,
   "headless": true,
-  "icon": "https://i.imgur.com/Ntpqy9x.png",
+  "icon": "https://i.imgur.com/hnLD4nM.png",
   "icon_background": "#FFFFFF",
   "context_menu": {
     "target": ["images_project", "videos_project", "point_cloud_project"],
