@@ -3,10 +3,10 @@ import supervisely_lib as sly
 from supervisely_lib.io.json import dump_json_file
 from supervisely_lib.project.project import Project, OpenMode, Progress
 from supervisely_lib.video_annotation.key_id_map import KeyIdMap
-from supervisely_lib.project.video_project import VideoProject, VideoAnnotation
+from supervisely_lib.project.video_project import VideoProject
 from supervisely_lib.project.pointcloud_project import PointcloudProject
 from supervisely_lib.api.module_api import ApiField
-from supervisely_lib.pointcloud_annotation.pointcloud_annotation import PointcloudAnnotation
+from distutils import util
 
 
 my_app = sly.AppService()
@@ -14,8 +14,8 @@ my_app = sly.AppService()
 TEAM_ID = int(os.environ['context.teamId'])
 WORKSPACE_ID = int(os.environ['context.workspaceId'])
 PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
+DOWNLOAD_ITEMS = bool(util.strtobool(os.environ['modal.state.items']))
 RESULT_DIR_NAME = 'export'
-DOWNLOAD_ITEMS = True
 logger = sly.logger
 
 @my_app.callback("export_only_labeled_items")
