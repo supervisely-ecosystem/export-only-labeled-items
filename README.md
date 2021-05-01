@@ -29,7 +29,7 @@ Export [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_n
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export only labeled items` 
 
-<img src="https://i.imgur.com/owXSoUx.png" width="800px"/>
+<img src="https://i.imgur.com/OPO6cbZ.png"/>
 
 
 
@@ -37,7 +37,7 @@ Export [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_n
 
 **Step 3**: Select the project export mode.
 
-<img src="https://i.imgur.com/sUJPl9K.png" width="800px"/>
+<img src="https://i.imgur.com/uI2ghGY.png" width="600px"/>
 
 
 
@@ -45,8 +45,8 @@ Export [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_n
 
 After running the application, you will be redirected to the Tasks page. Once application processing has finished, your link for downloading will become available. Click on the file name to download it.
 
-<img src="https://i.imgur.com/du75u9U.png" width="800px"/>
+<img src="https://i.imgur.com/53UUId1.png"/>
 
 **Note** You can also find your converted project in: Team Files->export->`projectId_projectName.tar`
 
-<img src="https://i.imgur.com/flDGi4A.png" width="800px"/>
+<img src="https://i.imgur.com/K78X2ls.png"/>
