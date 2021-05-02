@@ -45,8 +45,8 @@ Export [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_n
 
 After running the application, you will be redirected to the Tasks page. Once application processing has finished, your link for downloading will become available. Click on the file name to download it.
 
-<img src="https://i.imgur.com/RZWvbDs.png"/>
+<img src="https://i.imgur.com/rWeChuT.png"/>
 
 **Note** You can also find your converted project in: Team Files->export->`projectId_projectName.tar`
 
-<img src="https://i.imgur.com/tMTkW8B.png"/>
+<img src="https://i.imgur.com/KAIJVME.png"/>
