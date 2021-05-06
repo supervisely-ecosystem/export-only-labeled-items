@@ -43,7 +43,7 @@ Export [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_n
 
 ## How to use
 
-After running the application, you will be redirected to the Tasks page. Once application processing has finished, your link for downloading will become available. Click on the file name to download it.
+After running the application, you will be redirected to the Tasks page. Once application processing has finished, your link for downloading will be available. Click on the file name to download it.
 
 <img src="https://i.imgur.com/rWeChuT.png"/>
 
