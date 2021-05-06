@@ -43,7 +43,7 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
 
     RESULT_DIR = os.path.join(my_app.data_dir, RESULT_DIR_NAME, project_name)
     RESULT_ARCHIVE_PATH = os.path.join(my_app.data_dir, RESULT_DIR_NAME)
-    ARCHIVE_NAME = '{}.tar.gz'.format(project_name)
+    ARCHIVE_NAME = '{}_{}.tar.gz'.format(PROJECT_ID, project_name)
     RESULT_ARCHIVE = os.path.join(my_app.data_dir, ARCHIVE_NAME)
     remote_archive_path = "/{}/{}/{}/{}".format(RESULT_DIR_NAME, APP_NAME, TASK_ID, ARCHIVE_NAME)
     if api.file.exists(TEAM_ID, remote_archive_path):

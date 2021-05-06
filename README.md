@@ -20,12 +20,12 @@
 
 ## Overview
 
-Export labeled items from [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_navi) project and prepares downloadable `tar` archive. Images, videos and point clouds projects can be exported. Unlabeled items will be skipped on export. You can choose to export both data and annotations or only annotations.
+Export labeled items from [Supervisely](https://app.supervise.ly) project and prepares downloadable `tar` archive. Images, videos and point clouds projects can be exported. Unlabeled items will be skipped. You can choose to export both data and annotations or only annotations.
 
 
 
 ## How To Run 
-**Step 1**: Add app to your team from [Ecosystem](https://app.supervise.ly/ecosystem) if it is not there.
+**Step 1**: Add app to your team from [Ecosystem](https://app.supervise.ly/apps/ecosystem/export-only-labeled-items) if it is not there.
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export only labeled items` 
 
@@ -43,10 +43,10 @@ Export labeled items from [Supervisely](https://docs.supervise.ly/data-organizat
 
 ## How to use
 
-After running the application, you will be redirected to the Tasks page. Once application processing has finished, your link for downloading will be available. Click on the file name to download it.
+After running the application, you will be redirected to the `Tasks` page. Once application processing has finished, your link for downloading will be available. Click on the `file name` to download it.
 
 <img src="https://i.imgur.com/rWeChuT.png"/>
 
-**Note** You can also find your converted project in: `Team Files`->`ApplicationsData`->`Export_only_labeled_items`->`TaskID`->`projectName.tar`
+**Note** You can also find your converted project in: `Team Files`->`ApplicationsData`->`Export_only_labeled_items`->`TaskID`->`projectID_projectName.tar`
 
 <img src="https://i.imgur.com/WhHV5Vh.png"/>
