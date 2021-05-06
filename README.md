@@ -20,12 +20,12 @@
 
 ## Overview
 
-Export [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_navi) project and prepares downloadable `tar` archive. Images, videos and point clouds projects can be export. If items in project not labeled they will be skipped on export. You can choose to load project both data and annotations or only annotations.
+Export labeled items from [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_navi) project and prepares downloadable `tar` archive. Images, videos and point clouds projects can be exported. Unlabeled items will be skipped on export. You can choose to export both data and annotations or only annotations.
 
 
 
 ## How To Run 
-**Step 1**: Add app to your team from [Ecosystem](https://ecosystem.supervise.ly/apps/convert-supervisely-to-cityscapes-format) if it is not there.
+**Step 1**: Add app to your team from [Ecosystem](https://app.supervise.ly/ecosystem) if it is not there.
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export only labeled items` 
 
