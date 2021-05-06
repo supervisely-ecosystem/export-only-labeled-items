@@ -47,6 +47,6 @@ After running the application, you will be redirected to the Tasks page. Once ap
 
 <img src="https://i.imgur.com/rWeChuT.png"/>
 
-**Note** You can also find your converted project in: Team Files->export->`projectId_projectName.tar`
+**Note** You can also find your converted project in: `Team Files`->`ApplicationsData`->`Export_only_labeled_items`->`TaskID`->`projectName.tar`
 
-<img src="https://i.imgur.com/KAIJVME.png"/>
+<img src="https://i.imgur.com/WhHV5Vh.png"/>
