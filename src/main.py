@@ -16,7 +16,7 @@ WORKSPACE_ID = int(os.environ['context.workspaceId'])
 PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
 TASK_ID = int(os.environ["TASK_ID"])
 RESULT_DIR_NAME = 'ApplicationsData'
-APP_NAME = 'Export_only_labeled_items'
+APP_NAME = 'Export only labeled items'
 logger = sly.logger
 
 try:
