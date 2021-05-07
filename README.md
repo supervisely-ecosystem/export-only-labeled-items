@@ -37,7 +37,7 @@ App exports labeled items from [Supervisely](https://app.supervise.ly) project a
 
 **Step 3**: Select the project export mode.
 
-<img src="https://i.imgur.com/tJQEqxF.png" width="400px"/>
+<img src="https://i.imgur.com/tJQEqxF.png" width="500px"/>
 
 
 
