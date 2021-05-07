@@ -37,7 +37,7 @@ App exports labeled items from [Supervisely](https://app.supervise.ly) project a
 
 **Step 3**: Select the project export mode.
 
-<img src="https://i.imgur.com/tVHGW95.png"/>
+<img src="https://i.imgur.com/W63Y25J.png"/>
 
 
 
@@ -47,7 +47,7 @@ After running the application, you will be redirected to the `Tasks` page. Once 
 
 
 
-<img src="https://i.imgur.com/0kbPDBr.png"/>
+<img src="https://i.imgur.com/4rdr2Pk.png"/>
 
 **Note** You can also find your converted project in: `Team Files`->`Export_only_labeled_items`->`<taskId>_<projectId>_<projectName>.tar`
 

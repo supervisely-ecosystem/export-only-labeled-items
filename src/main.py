@@ -63,7 +63,7 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
             ds_progress = Progress('Downloading dataset: {}'.format(dataset_info.name), total_cnt=len(images))
             labeled_items_cnt = 0
             not_labeled_items_cnt = 0
-            for batch in sly.batched(images):
+            for batch in sly.batched(images, batch_size=10):
                 image_ids = [image_info.id for image_info in batch]
                 image_names = [image_info.name for image_info in batch]
 
@@ -105,7 +105,7 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
             labeled_items_cnt = 0
             not_labeled_items_cnt = 0
             ds_progress = Progress('Downloading dataset: {}'.format(dataset_info.name), total_cnt=len(videos))
-            for batch in sly.batched(videos):
+            for batch in sly.batched(videos, batch_size=10):
                 video_ids = [video_info.id for video_info in batch]
                 video_names = [video_info.name for video_info in batch]
                 ann_jsons = api.video.annotation.download_bulk(dataset_info.id, video_ids)
@@ -139,7 +139,7 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
             labeled_items_cnt = 0
             not_labeled_items_cnt = 0
             ds_progress = Progress('Downloading dataset: {!r}'.format(dataset_info.name), total_cnt=len(pointclouds))
-            for batch in sly.batched(pointclouds):
+            for batch in sly.batched(pointclouds, batch_size=10):
                 pointcloud_ids = [pointcloud_info.id for pointcloud_info in batch]
                 pointcloud_names = [pointcloud_info.name for pointcloud_info in batch]
 
@@ -201,11 +201,9 @@ def main():
         "WORKSPACE_ID": WORKSPACE_ID,
         "modal.state.slyProjectId": PROJECT_ID
     })
-
-    # Run application service
     my_app.run(initial_events=[{"command": "export_only_labeled_items"}])
 
 
 if __name__ == '__main__':
-        sly.main_wrapper("main", main)
+    sly.main_wrapper("main", main)
 
