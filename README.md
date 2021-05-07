@@ -20,7 +20,7 @@
 
 ## Overview
 
-App exports labeled items from [Supervisely](https://app.supervise.ly) project and prepares downloadable `tar` archive. Images, videos and point clouds projects can be exported. Unlabeled items will be skipped. You can choose to export both data and annotations or only annotations.
+App exports labeled items from [Supervisely](https://app.supervise.ly) project and prepare downloadable `tar` archive. App works with all types of projects: `Images`, `Videos` , `Point Clouds`. Unlabeled items will be skipped. Also there is the additional option to export only annotations without actual data.
 
 
 
