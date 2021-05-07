@@ -29,7 +29,7 @@ App exports labeled items from [Supervisely](https://app.supervise.ly) project a
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export only labeled items` 
 
-<img src="https://i.imgur.com/EEQSPB3.png"/>
+<img src="https://i.imgur.com/cFSJIpi.png"/>
 
 
 
