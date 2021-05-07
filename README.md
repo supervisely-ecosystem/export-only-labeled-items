@@ -29,7 +29,7 @@ Export labeled items from [Supervisely](https://app.supervise.ly) project and pr
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export only labeled items` 
 
-<img src="https://i.imgur.com/OPO6cbZ.png"/>
+<img src="https://i.imgur.com/EEQSPB3.png"/>
 
 
 
@@ -37,7 +37,7 @@ Export labeled items from [Supervisely](https://app.supervise.ly) project and pr
 
 **Step 3**: Select the project export mode.
 
-<img src="https://i.imgur.com/uI2ghGY.png" width="400px"/>
+<img src="https://i.imgur.com/9scZFVE.png"/>
 
 
 
@@ -45,8 +45,10 @@ Export labeled items from [Supervisely](https://app.supervise.ly) project and pr
 
 After running the application, you will be redirected to the `Tasks` page. Once application processing has finished, your link for downloading will be available. Click on the `file name` to download it.
 
-<img src="https://i.imgur.com/rWeChuT.png"/>
+
+
+<img src="https://i.imgur.com/0kbPDBr.png"/>
 
 **Note** You can also find your converted project in: `Team Files`->`ApplicationsData`->`Export_only_labeled_items`->`TaskID`->`projectID_projectName.tar`
 
-<img src="https://i.imgur.com/WhHV5Vh.png"/>
+<img src="https://i.imgur.com/YO7AABZ.png"/>
