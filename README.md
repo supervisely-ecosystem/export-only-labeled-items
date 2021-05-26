@@ -20,8 +20,7 @@
 
 ## Overview
 
-App exports labeled items from [Supervisely](https://app.supervise.ly) project and prepares downloadable `tar` archive. App works with all types of projects: `Images`, `Videos` , `Point Clouds`. Unlabeled items will be skipped. Also there is an additional option to export only annotations without actual data.
-
+App exports only labeled items from project and prepares downloadable `tar` archive. Annotations will be in [Supervisely format](https://docs.supervise.ly/data-organization/00_ann_format_navi). App works with all types of projects: `Images`, `Videos` , `Point Clouds`. Unlabeled items will be skipped. Also there is the additional option to export only annotations without actual data.
 
 
 ## How To Run 
@@ -32,9 +31,6 @@ App exports labeled items from [Supervisely](https://app.supervise.ly) project a
 <img src="https://i.imgur.com/cFSJIpi.png"/>
 
 
-
-
-
 **Step 3**: Select project export mode.
 
 <img src="https://i.imgur.com/WU9yOJK.png" width="500px"/>
@@ -43,9 +39,7 @@ App exports labeled items from [Supervisely](https://app.supervise.ly) project a
 
 ## How to use
 
-After running the application, you will be redirected to the `Tasks` page. Once application processing has finished, your link for downloading will be available. Click on the `file name` to download it.
-
-
+After running the application, you will be redirected to the `Tasks` page. Once application processing has finished, the download link will be available. Click on it to download archive.
 
 <img src="https://i.imgur.com/4rdr2Pk.png"/>
 
