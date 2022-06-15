@@ -2,6 +2,7 @@
   "name": "Export only labeled items",
   "type": "app",
   "categories": [
+    "images",
     "export"
   ],
   "description": "Export only labeled items and prepares downloadable tar archive",
