@@ -3,6 +3,8 @@
   "type": "app",
   "categories": [
     "images",
+    "volumes",
+    "pointclouds",
     "export"
   ],
   "description": "Export only labeled items and prepares downloadable tar archive",
