@@ -140,7 +140,7 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
             labeled_items_cnt = 0
             not_labeled_items_cnt = 0
             ds_progress = Progress('Downloading dataset: {!r}'.format(dataset_info.name), total_cnt=len(pointclouds))
-            for batch in sly.batched(pointclouds, batch_size=10):
+            for batch in sly.batched(pointclouds, batch_size=1):
                 pointcloud_ids = [pointcloud_info.id for pointcloud_info in batch]
                 pointcloud_names = [pointcloud_info.name for pointcloud_info in batch]
 
