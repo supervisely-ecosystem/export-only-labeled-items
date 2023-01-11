@@ -16,7 +16,7 @@ TEAM_ID = int(os.environ['context.teamId'])
 WORKSPACE_ID = int(os.environ['context.workspaceId'])
 PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
 TASK_ID = int(os.environ["TASK_ID"])
-RESULT_DIR_NAME = 'Export only labeled items'
+RESULT_DIR_NAME = 'export only labeled items'
 logger = sly.logger
 
 try:
@@ -45,7 +45,8 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
     RESULT_ARCHIVE_PATH = os.path.join(my_app.data_dir, RESULT_DIR_NAME)
     ARCHIVE_NAME = '{}_{}_{}.tar.gz'.format(TASK_ID, PROJECT_ID, project_name)
     RESULT_ARCHIVE = os.path.join(my_app.data_dir, ARCHIVE_NAME)
-    remote_archive_path = "/{}/{}".format(RESULT_DIR_NAME, ARCHIVE_NAME)
+    remote_archive_path = os.path.join(
+        sly.team_files.RECOMMENDED_EXPORT_PATH, "{}/{}".format(RESULT_DIR_NAME, ARCHIVE_NAME))
     if api.file.exists(TEAM_ID, remote_archive_path):
         logger.warn('Archive with name {} already exist in {} folder'.format(ARCHIVE_NAME, RESULT_DIR_NAME))
         my_app.stop()
