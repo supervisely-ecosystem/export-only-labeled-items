@@ -27,12 +27,12 @@ App exports only labeled items from project and prepares downloadable `tar` arch
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export only labeled items` 
 
-<img src="https://i.imgur.com/cFSJIpi.png"/>
+<img src="media/htr2.png"/>
 
 
 **Step 3**: Select project export mode.
 
-<img src="https://i.imgur.com/WU9yOJK.png" width="500px"/>
+<img src="media/htr3.png" width="500px"/>
 
 
 
@@ -40,8 +40,8 @@ App exports only labeled items from project and prepares downloadable `tar` arch
 
 After running the application, you will be redirected to the `Tasks` page. Once application processing has finished, the download link will be available. Click on it to download archive.
 
-<img src="https://i.imgur.com/4rdr2Pk.png"/>
+<img src="media/htu.png"/>
 
 **Note:** You can also find your converted project in: `Team Files`->`Export_only_labeled_items`->`<taskId>_<projectId>_<projectName>.tar`
 
-<img src="https://i.imgur.com/B75bSh1.png"/>
+<img src="media/htua.png"/>
