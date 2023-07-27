@@ -1,30 +1,30 @@
 {
-  "name": "Export only labeled items",
-  "type": "app",
-  "categories": [
-    "images",
-    "videos",
-    "pointclouds",
-    "export"
-  ],
-  "description": "Export only labeled items and prepares downloadable tar archive",
-  "docker_image": "supervisely/base-py-sdk:6.72.55",
-  "instance_version": "6.5.1",
-  "main_script": "src/main.py",
-  "modal_template": "src/modal.html",
-  "modal_template_state": {},
-  "task_location": "workspace_tasks",
-  "isolate": true,
-  "headless": true,
-  "icon": "https://i.imgur.com/hnLD4nM.png",
-  "icon_background": "#FFFFFF",
-  "context_menu": {
-    "target": [
-      "images_project",
-      "videos_project",
-      "point_cloud_project"
+    "name": "Export only labeled items",
+    "type": "app",
+    "categories": [
+        "images",
+        "videos",
+        "pointclouds",
+        "export"
     ],
-    "context_root": "Download as"
-  },
-  "poster": "https://user-images.githubusercontent.com/48245050/182848469-81045a80-d01d-4314-b4bb-9996a6c4edf0.png"
+    "description": "Export only labeled items and prepares downloadable tar archive",
+    "docker_image": "supervisely/import-export:0.0.2",
+    "instance_version": "6.5.1",
+    "main_script": "src/main.py",
+    "modal_template": "src/modal.html",
+    "modal_template_state": {},
+    "task_location": "workspace_tasks",
+    "isolate": true,
+    "headless": true,
+    "icon": "https://i.imgur.com/hnLD4nM.png",
+    "icon_background": "#FFFFFF",
+    "context_menu": {
+        "target": [
+            "images_project",
+            "videos_project",
+            "point_cloud_project"
+        ],
+        "context_root": "Download as"
+    },
+    "poster": "https://user-images.githubusercontent.com/48245050/182848469-81045a80-d01d-4314-b4bb-9996a6c4edf0.png"
 }
