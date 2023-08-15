@@ -33,6 +33,8 @@ else:
 def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger):
 
     project = api.project.get_info_by_id(PROJECT_ID)
+    if project is None:
+        raise RuntimeError(f"Project with the given ID {PROJECT_ID} not found")
     project_name = project.name
     meta_json = api.project.get_meta(PROJECT_ID)
     meta = sly.ProjectMeta.from_json(meta_json)
