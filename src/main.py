@@ -8,7 +8,12 @@ from supervisely.project.pointcloud_project import PointcloudProject
 from supervisely.api.module_api import ApiField
 from supervisely.app.v1.app_service import AppService
 from distutils import util
+from dotenv import load_dotenv
 
+
+if sly.is_development():
+    load_dotenv("local.env")
+    load_dotenv(os.path.expanduser("~/supervisely.env"))
 
 my_app = AppService()
 
@@ -53,7 +58,7 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
         logger.warn('Archive with name {} already exist in {} folder'.format(ARCHIVE_NAME, RESULT_DIR_NAME))
         my_app.stop()
 
-    sly.fs.mkdir(RESULT_DIR)
+    sly.fs.mkdir(RESULT_DIR, True)
     app_logger.info("Export folder has been created")
 
     if project.type == str(sly.ProjectType.IMAGES):
@@ -71,11 +76,19 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
                 image_ids = [image_info.id for image_info in batch]
                 image_names = [image_info.name for image_info in batch]
 
-                ann_infos = api.annotation.download_batch(dataset_id, image_ids)
-                ann_jsons = [ann_info.annotation for ann_info in ann_infos]
+                try:
+                    ann_infos = api.annotation.download_batch(dataset_id, image_ids)
+                    ann_jsons = [ann_info.annotation for ann_info in ann_infos]
+                except Exception as e:
+                    logger.warn(f"Can not download {len(image_ids)} annotations: {repr(e)}. Skip batch.")
+                    continue
 
                 if DOWNLOAD_ITEMS:
-                    batch_imgs_bytes = api.image.download_bytes(dataset_id, image_ids)
+                    try:
+                        batch_imgs_bytes = api.image.download_bytes(dataset_id, image_ids)
+                    except Exception as e:
+                        logger.warn(f"Can not download {len(image_ids)} images: {repr(e)}. Skip batch.")
+                        continue
                     for name, img_bytes, ann_json in zip(image_names, batch_imgs_bytes, ann_jsons):
                         ann = sly.Annotation.from_json(ann_json, meta)
                         if ann.is_empty():
@@ -112,17 +125,27 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
             for batch in sly.batched(videos, batch_size=10):
                 video_ids = [video_info.id for video_info in batch]
                 video_names = [video_info.name for video_info in batch]
-                ann_jsons = api.video.annotation.download_bulk(dataset_info.id, video_ids)
+                try:
+                    ann_jsons = api.video.annotation.download_bulk(dataset_info.id, video_ids)
+                except Exception as e:
+                    logger.warn(f"Can not download {len(video_ids)} annotations: {repr(e)}. Skip batch.")
+                    continue
                 for video_id, video_name, ann_json in zip(video_ids, video_names, ann_jsons):
                     video_ann = sly.VideoAnnotation.from_json(ann_json, meta, key_id_map)
                     if video_ann.is_empty():
                         not_labeled_items_cnt += 1
                         continue
-                    video_file_path = dataset_fs.generate_item_path(video_name)
+                    video_file_path = None
                     labeled_items_cnt += 1
                     if DOWNLOAD_ITEMS:
-                        api.video.download_path(video_id, video_file_path)
+                        try:
+                            video_file_path = dataset_fs.generate_item_path(video_name)
+                            api.video.download_path(video_id, video_file_path)
+                        except Exception as e:
+                            logger.warn(f"Can not download video {video_name}: {repr(e)}. Skip video.")
+                            continue
                     dataset_fs.add_item_file(video_name, video_file_path, ann=video_ann, _validate_item=False)
+
 
                 ds_progress.iters_done_report(len(batch))
             logger.info(
