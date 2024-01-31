@@ -5,4 +5,7 @@ venv
 *.png
 *.jpg
 *.jpeg
-supervisely_lib
+supervisely
+.venv
+debug
+.DS_Store
