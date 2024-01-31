@@ -224,6 +224,7 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
     splits = sly.fs.archive_directory(RESULT_PROJECT_DIR, RESULT_ARCHIVE, split=split)
     app_logger.info(f"Result directory is archived {'with splitting' if splits else ''}")
 
+    sly.fs.remove_dir(RESULT_PROJECT_DIR) # remove dir 
     if splits is None:
         remote_path = os.path.join(remote_path, ARCHIVE_NAME)
 
