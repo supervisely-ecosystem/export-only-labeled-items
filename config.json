@@ -12,7 +12,9 @@
     "instance_version": "6.8.73",
     "main_script": "src/main.py",
     "modal_template": "src/modal.html",
-    "modal_template_state": {},
+    "modal_template_state": {
+        "items": true
+    },
     "task_location": "workspace_tasks",
     "isolate": true,
     "headless": true,
