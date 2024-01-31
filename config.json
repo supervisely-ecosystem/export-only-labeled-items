@@ -13,7 +13,7 @@
     "main_script": "src/main.py",
     "modal_template": "src/modal.html",
     "modal_template_state": {
-        "items": true
+        "items": "True"
     },
     "task_location": "workspace_tasks",
     "isolate": true,
