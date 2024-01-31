@@ -17,11 +17,22 @@ if sly.is_development():
 
 my_app = AppService()
 
-TEAM_ID = int(os.environ['context.teamId'])
-WORKSPACE_ID = int(os.environ['context.workspaceId'])
-PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
-TASK_ID = int(os.environ["TASK_ID"])
+TEAM_ID = sly.env.team_id()
+WORKSPACE_ID = sly.env.workspace_id()
+PROJECT_ID = sly.env.project_id()
+TASK_ID = sly.env.task_id()
 RESULT_DIR_NAME = 'export only labeled items'
+
+# SIZE_LIMIT = 10 if sly.is_community() else 100
+# SIZE_LIMIT_BYTES = SIZE_LIMIT * 1024 * 1024 * 1024
+# SPLIT_MODE = "MB"
+# SPLIT_SIZE = 500 # do not increase this value (memory issues)
+
+SIZE_LIMIT = 10 # ! for tests if sly.is_community() else 100
+SIZE_LIMIT_BYTES = SIZE_LIMIT * 1024 * 1024 # ! for tests * 1024
+SPLIT_MODE = "MB"
+SPLIT_SIZE = 50 # ! for tests 00 # do not increase this value (memory issues)
+
 logger = sly.logger
 
 try:
@@ -49,14 +60,14 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
         my_app.stop()
 
     RESULT_DIR = os.path.join(my_app.data_dir, RESULT_DIR_NAME, project_name)
-    RESULT_ARCHIVE_PATH = os.path.join(my_app.data_dir, RESULT_DIR_NAME)
-    ARCHIVE_NAME = '{}_{}_{}.tar.gz'.format(TASK_ID, PROJECT_ID, project_name)
-    RESULT_ARCHIVE = os.path.join(my_app.data_dir, ARCHIVE_NAME)
-    remote_archive_path = os.path.join(
-        sly.team_files.RECOMMENDED_EXPORT_PATH, "{}/{}".format(RESULT_DIR_NAME, ARCHIVE_NAME))
-    if api.file.exists(TEAM_ID, remote_archive_path):
-        logger.warn('Archive with name {} already exist in {} folder'.format(ARCHIVE_NAME, RESULT_DIR_NAME))
-        my_app.stop()
+    RESULT_PROJECT_DIR = os.path.join(my_app.data_dir, RESULT_DIR_NAME)
+    ARCHIVE_NAME = f"{PROJECT_ID}_{project_name}.tar.gz"
+    RESULT_ARCHIVE_DIR = os.path.join(my_app.data_dir, f"{TASK_ID}")
+    sly.fs.mkdir(RESULT_ARCHIVE_DIR, remove_content_if_exists=True)
+    RESULT_ARCHIVE = os.path.join(RESULT_ARCHIVE_DIR, ARCHIVE_NAME)
+    remote_path = os.path.join(
+        sly.team_files.RECOMMENDED_EXPORT_PATH, "export-only-labeled-items", f"{task_id}"
+    )
 
     sly.fs.mkdir(RESULT_DIR, True)
     app_logger.info("Export folder has been created")
@@ -80,14 +91,14 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
                     ann_infos = api.annotation.download_batch(dataset_id, image_ids)
                     ann_jsons = [ann_info.annotation for ann_info in ann_infos]
                 except Exception as e:
-                    logger.warn(f"Can not download {len(image_ids)} annotations: {repr(e)}. Skip batch.")
+                    logger.warn(f"Can not download {len(image_ids)} annotations from dataset {dataset_info.name}: {repr(e)}. Skip batch.")
                     continue
 
                 if DOWNLOAD_ITEMS:
                     try:
                         batch_imgs_bytes = api.image.download_bytes(dataset_id, image_ids)
                     except Exception as e:
-                        logger.warn(f"Can not download {len(image_ids)} images: {repr(e)}. Skip batch.")
+                        logger.warn(f"Can not download {len(image_ids)} images from dataset {dataset_info.name}: {repr(e)}. Skip batch.")
                         continue
                     for name, img_bytes, ann_json in zip(image_names, batch_imgs_bytes, ann_jsons):
                         ann = sly.Annotation.from_json(ann_json, meta)
@@ -202,22 +213,65 @@ def export_only_labeled_items(api: sly.Api, task_id, context, state, app_logger)
 
         project_fs.set_key_id_map(key_id_map)
 
-    sly.fs.archive_directory(RESULT_ARCHIVE_PATH, RESULT_ARCHIVE)
-    app_logger.info("Result directory is archived")
+    dir_size = sly.fs.get_directory_size(RESULT_PROJECT_DIR)
+    dir_size_gb = round(dir_size / (1024 * 1024 * 1024), 2)
+
+    split = None
+    if dir_size > SIZE_LIMIT_BYTES:
+        app_logger.info(f"Result archive size ({dir_size_gb} GB) more than {SIZE_LIMIT} GB")
+        split = f"{SPLIT_SIZE}{SPLIT_MODE}"
+        app_logger.info(f"It will be uploaded with splitting by {split}") 
+    splits = sly.fs.archive_directory(RESULT_PROJECT_DIR, RESULT_ARCHIVE, split=split)
+    app_logger.info(f"Result directory is archived {'with splitting' if splits else ''}")
+
+    if splits is None:
+        remote_path = os.path.join(remote_path, ARCHIVE_NAME)
 
     upload_progress = []
+    upload_msg = f"Uploading{' splitted' if splits else ''} archive {ARCHIVE_NAME} to Team Files"
 
     def _print_progress(monitor, upload_progress):
         if len(upload_progress) == 0:
-            upload_progress.append(sly.Progress(message="Upload {!r}".format(ARCHIVE_NAME),
-                                                total_cnt=monitor.len,
-                                                ext_logger=app_logger,
-                                                is_size=True))
+            upload_progress.append(
+                sly.Progress(
+                    message=upload_msg,
+                    total_cnt=monitor.len,
+                    ext_logger=app_logger,
+                    is_size=True,
+                )
+            )
         upload_progress[0].set_current_value(monitor.bytes_read)
 
-    file_info = api.file.upload(TEAM_ID, RESULT_ARCHIVE, remote_archive_path, lambda m: _print_progress(m, upload_progress))
-    app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.storage_path))
-    api.task.set_output_archive(task_id, file_info.id, ARCHIVE_NAME, file_url=file_info.storage_path)
+    if splits:
+        res_remote_dir = api.file.upload_directory(
+            TEAM_ID,
+            RESULT_ARCHIVE_DIR,
+            remote_path,
+            progress_size_cb=lambda m: _print_progress(m, upload_progress),
+        )
+        main_part_name = os.path.basename(splits[0])
+        main_part = os.path.join(res_remote_dir, main_part_name)
+        file_info = api.file.get_info_by_path(TEAM_ID, main_part)
+        api.task.set_output_directory(
+            task_id=task_id,
+            file_id=file_info.id,
+            directory_path=res_remote_dir
+        )
+        app_logger.info(f"Uploaded to Team-Files: {res_remote_dir}")
+    else:
+        file_info = api.file.upload(
+            TEAM_ID,
+            RESULT_ARCHIVE,
+            remote_path,
+            lambda m: _print_progress(m, upload_progress),
+        )
+        api.task.set_output_archive(
+            task_id=task_id,
+            file_id=file_info.id,
+            file_name=ARCHIVE_NAME,
+            file_url=file_info.storage_path,
+        )
+        app_logger.info(f"Uploaded to Team-Files: {file_info.path}")
 
     my_app.stop()
 
