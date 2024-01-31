@@ -30,7 +30,7 @@ RESULT_DIR_NAME = 'export only labeled items'
 
 SIZE_LIMIT = 10 # ! for tests if sly.is_community() else 100
 SIZE_LIMIT_BYTES = SIZE_LIMIT * 1024 * 1024 # ! for tests * 1024
-SPLIT_MODE = "MB"
+SPLIT_MODE = "KB"
 SPLIT_SIZE = 50 # ! for tests 00 # do not increase this value (memory issues)
 
 logger = sly.logger
