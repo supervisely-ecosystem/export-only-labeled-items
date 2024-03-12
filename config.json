@@ -1,6 +1,7 @@
 {
     "name": "Export only labeled items",
     "type": "app",
+    "version": "2.0.0",
     "categories": [
         "images",
         "videos",
@@ -8,7 +9,7 @@
         "export"
     ],
     "description": "Export only labeled items and prepares downloadable tar archive",
-    "docker_image": "supervisely/import-export:6.73.22",
+    "docker_image": "supervisely/import-export:6.73.48",
     "instance_version": "6.8.73",
     "main_script": "src/main.py",
     "modal_template": "src/modal.html",

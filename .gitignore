@@ -9,3 +9,4 @@ supervisely
 .venv
 debug
 .DS_Store
+data/
