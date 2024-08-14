@@ -11,6 +11,8 @@ from supervisely.project.project import OpenMode, Progress, Project
 from supervisely.project.video_project import VideoProject
 from supervisely.video_annotation.key_id_map import KeyIdMap
 
+import workflow as w
+
 if sly.is_development():
     print("go")
     load_dotenv("local.env")
@@ -49,6 +51,7 @@ def export_only_labeled_items(api: sly.Api):
     project = api.project.get_info_by_id(project_id)
     if project is None:
         raise RuntimeError(f"Project with the given ID {project_id} not found")
+    w.workflow_input(project.id)
     project_name = project.name
     meta_json = api.project.get_meta(project_id)
     meta = sly.ProjectMeta.from_json(meta_json)
@@ -308,6 +311,7 @@ def export_only_labeled_items(api: sly.Api):
         sly.logger.debug(
             "Task ID is not set in local.env file, it has no effect in development mode."
         )
+    w.workflow_output(file_info)
     sly.logger.info(f"Uploaded to Team-Files: {res_remote_dir}")
 
 
