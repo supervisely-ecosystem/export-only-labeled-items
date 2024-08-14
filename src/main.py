@@ -264,7 +264,8 @@ def export_only_labeled_items(api: sly.Api):
 
     if dir_size < SIZE_LIMIT_BYTES:
         sly.logger.debug(f"Result archive size ({dir_size_gb} GB) less than limit {SIZE_LIMIT} GB")
-        sly.output.set_download(RESULT_PROJECT_DIR)
+        file_info = sly.output.set_download(RESULT_PROJECT_DIR)
+        w.workflow_output(api, file_info)
         sly.logger.info(f"Project {project_name} has been successfully exported.")
         return
 
