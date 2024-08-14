@@ -5,7 +5,7 @@
   "categories": ["images", "videos", "pointclouds", "export"],
   "description": "Export only labeled items and prepares downloadable tar archive",
   "docker_image": "supervisely/import-export:6.73.156",
-  "instance_version": "6.9.22",
+  "instance_version": "6.10.0",
   "main_script": "src/main.py",
   "modal_template": "src/modal.html",
   "modal_template_state": {
