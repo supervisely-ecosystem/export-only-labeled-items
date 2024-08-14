@@ -51,7 +51,7 @@ def export_only_labeled_items(api: sly.Api):
     project = api.project.get_info_by_id(project_id)
     if project is None:
         raise RuntimeError(f"Project with the given ID {project_id} not found")
-    w.workflow_input(project.id)
+    w.workflow_input(api, project.id)
     project_name = project.name
     meta_json = api.project.get_meta(project_id)
     meta = sly.ProjectMeta.from_json(meta_json)
@@ -311,7 +311,7 @@ def export_only_labeled_items(api: sly.Api):
         sly.logger.debug(
             "Task ID is not set in local.env file, it has no effect in development mode."
         )
-    w.workflow_output(file_info)
+    w.workflow_output(api, file_info)
     sly.logger.info(f"Uploaded to Team-Files: {res_remote_dir}")
 
 
