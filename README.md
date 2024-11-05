@@ -10,22 +10,22 @@
   <a href="#How-To-Use">How To Use</a>
 </p>
 
-[![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervise.ly/slack)
+[![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervisely.com/slack)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/export-only-labeled-items)
-[![views](https://app.supervise.ly/img/badges/views/supervisely-ecosystem/export-only-labeled-items.png)](https://supervise.ly)
-[![runs](https://app.supervise.ly/img/badges/runs/supervisely-ecosystem/export-only-labeled-items.png)](https://supervise.ly)
+[![views](https://app.supervisely.com/img/badges/views/supervisely-ecosystem/export-only-labeled-items.png)](https://supervisely.com)
+[![runs](https://app.supervisely.com/img/badges/runs/supervisely-ecosystem/export-only-labeled-items.png)](https://supervisely.com)
 
 </div>
 
 ## Overview
 
-App exports only labeled items from project and prepares downloadable `tar` archive. Annotations will be in [Supervisely format](https://docs.supervise.ly/data-organization/00_ann_format_navi). App works with all types of projects: `Images`, `Videos` , `Point Clouds`. Unlabeled items will be skipped. Also there is the additional option to export only annotations without actual data.
+App exports only labeled items from project and prepares downloadable `tar` archive. Annotations will be in [Supervisely format](https://docs.supervisely.com/data-organization/00_ann_format_navi). App works with all types of projects: `Images`, `Videos` , `Point Clouds`. Unlabeled items will be skipped. Also there is the additional option to export only annotations without actual data.
 
 🏋️ Starting from version v1.2.13 application supports split archives. If the archive file size is too big, it will be split into several parts. Learn more below in the "How to extract split archives" section.
 
 
 ## How To Run 
-**Step 1**: Add app to your team from [Ecosystem](https://app.supervise.ly/apps/ecosystem/export-only-labeled-items) if it is not there.
+**Step 1**: Add app to your team from [Ecosystem](https://app.supervisely.com/apps/ecosystem/export-only-labeled-items) if it is not there.
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export only labeled items` 
 
