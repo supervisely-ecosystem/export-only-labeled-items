@@ -196,7 +196,7 @@ def export_only_labeled_items(api: sly.Api):
                 with Timer("Video annotation downloading", total_items_cnt):
                     coro = api.video.annotation.download_bulk_async(
                         dataset_info.id, video_ids, progress_cb=video_ann_progress.iters_done_report
-                    )  # not implemented yet
+                    )  # ! not implemented yet
                     loop = sly.utils.get_or_create_event_loop()
                     if loop.is_running():
                         future = asyncio.run_coroutine_threadsafe(coro, loop)
@@ -272,7 +272,7 @@ def export_only_labeled_items(api: sly.Api):
                     "Downloading annotations...", total_items_cnt, min_report_percent=10
                 )
                 with Timer("Annotation downloading", total_items_cnt):
-                    coro = api.pointcloud.annotation.download_bulk_async(  # not implemented yet
+                    coro = api.pointcloud.annotation.download_bulk_async(  # ! not implemented yet
                         dataset_id, ids, progress_cb=ann_progress.iters_done_report
                     )
                     loop = sly.utils.get_or_create_event_loop()
