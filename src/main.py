@@ -30,7 +30,7 @@ class Timer:
         self.elapsed = self.end - self.start
         msg = self.message or f"Block execution"
         if self.items_cnt is not None:
-            log_msg = f"{msg} time: {self.elapsed:.3f} seconds per {self.items_cnt} item  ({self.elapsed/self.items_cnt:.3f} seconds per item)"
+            log_msg = f"{msg} time: {self.elapsed:.3f} seconds per {self.items_cnt} items  ({self.elapsed/self.items_cnt:.3f} seconds per item)"
         else:
             log_msg = f"{msg} time: {self.elapsed:.3f} seconds"
         sly.logger.info(log_msg)
