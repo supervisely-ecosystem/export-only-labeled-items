@@ -110,65 +110,71 @@ def export_only_labeled_items(api: sly.Api):
 
             total_items_cnt = len(images)
             not_labeled_items_cnt = 0
-
-            ids = [info.id for info in images]
-            img_names = [info.name for info in images]
-            try:
-                ann_progress = Progress("Downloading annotations...", total_items_cnt, min_report_percent=10)
-                anns = []
-                with Timer("Annotation downloading", total_items_cnt):
-                    coro = api.annotation.download_bulk_async(
-                        dataset_id, ids, ann_progress.iters_done_report
-                    )
-                    loop = sly.utils.get_or_create_event_loop()
-                    if loop.is_running():
-                        future = asyncio.run_coroutine_threadsafe(coro, loop)
-                        anns.extend(future.result())
-                    else:
-                        anns.extend(loop.run_until_complete(coro))
-                ann_jsons = [ann_info.annotation for ann_info in anns]
-            except Exception as e:
-                sly.logger.warn(
-                    f"Can not download {total_items_cnt} annotations from dataset {dataset_info.name}: {repr(e)}. Skip batch."
-                )
-                continue
-
-            if DOWNLOAD_ITEMS:
+            ds_progress = sly.Progress(f"Processing dataset: {dataset_info.name}", len(images))
+            for batch in sly.batched(images):
+                ids = [info.id for info in batch]
+                img_names = [info.name for info in batch]
                 try:
-                    image_progress = Progress("Downloading images...", total_items_cnt, min_report_percent=10)
-                    img_bytes = []
-                    with Timer("Image downloading", total_items_cnt):
-                        coro = api.image.download_bytes_many_async(
-                            ids, progress_cb=image_progress.iters_done_report
+                    ann_progress = Progress(
+                        "Downloading annotations...", total_items_cnt, min_report_percent=10
+                    )
+                    anns = []
+                    with Timer("Annotation downloading", total_items_cnt):
+                        coro = api.annotation.download_bulk_async(
+                            dataset_id, ids, ann_progress.iters_done_report
                         )
                         loop = sly.utils.get_or_create_event_loop()
                         if loop.is_running():
                             future = asyncio.run_coroutine_threadsafe(coro, loop)
-                            img_bytes.extend(future.result())
+                            anns.extend(future.result())
                         else:
-                            img_bytes.extend(loop.run_until_complete(coro))
-                    for name, img_bytes, ann_json in zip(img_names, img_bytes, ann_jsons):
+                            anns.extend(loop.run_until_complete(coro))
+                    ann_jsons = [ann_info.annotation for ann_info in anns]
+                except Exception as e:
+                    sly.logger.warn(
+                        f"Can not download {total_items_cnt} annotations from dataset {dataset_info.name}: {repr(e)}. Skip batch."
+                    )
+                    continue
+
+                if DOWNLOAD_ITEMS:
+                    try:
+                        image_progress = Progress(
+                            "Downloading images...", total_items_cnt, min_report_percent=10
+                        )
+                        img_bytes = []
+                        with Timer("Image downloading", total_items_cnt):
+                            coro = api.image.download_bytes_many_async(
+                                ids, progress_cb=image_progress.iters_done_report
+                            )
+                            loop = sly.utils.get_or_create_event_loop()
+                            if loop.is_running():
+                                future = asyncio.run_coroutine_threadsafe(coro, loop)
+                                img_bytes.extend(future.result())
+                            else:
+                                img_bytes.extend(loop.run_until_complete(coro))
+                        for name, img_bytes, ann_json in zip(img_names, img_bytes, ann_jsons):
+                            ann = sly.Annotation.from_json(ann_json, meta)
+                            if ann.is_empty():
+                                not_labeled_items_cnt += 1
+                                continue
+                            dataset_fs.add_item_raw_bytes(name, img_bytes, ann_json)
+                    except:
+                        sly.logger.warning(
+                            f"Can not download {total_items_cnt} images from dataset {dataset_info.name}: {repr(e)}. Skip batch."
+                        )
+                        continue
+                else:
+                    ann_dir = os.path.join(RESULT_DIR, dataset_info.name, "ann")
+                    sly.fs.mkdir(ann_dir)
+                    for image_name, ann_json in zip(img_names, ann_jsons):
                         ann = sly.Annotation.from_json(ann_json, meta)
                         if ann.is_empty():
                             not_labeled_items_cnt += 1
                             continue
-                        dataset_fs.add_item_raw_bytes(name, img_bytes, ann_json)
-                except:
-                    sly.logger.warning(
-                        f"Can not download {total_items_cnt} images from dataset {dataset_info.name}: {repr(e)}. Skip batch."
-                    )
-                    continue
-            else:
-                ann_dir = os.path.join(RESULT_DIR, dataset_info.name, "ann")
-                sly.fs.mkdir(ann_dir)
-                for image_name, ann_json in zip(img_names, ann_jsons):
-                    ann = sly.Annotation.from_json(ann_json, meta)
-                    if ann.is_empty():
-                        not_labeled_items_cnt += 1
-                        continue
-                    sly.io.json.dump_json_file(
-                        ann_json, os.path.join(ann_dir, image_name + ".json")
-                    )
+                        sly.io.json.dump_json_file(
+                            ann_json, os.path.join(ann_dir, image_name + ".json")
+                        )
+                ds_progress.iters_done_report(len(batch))
 
             if total_items_cnt == not_labeled_items_cnt:
                 sly.logger.warning(
