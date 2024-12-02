@@ -12,6 +12,29 @@ from supervisely.project.video_project import VideoProject
 from supervisely.video_annotation.key_id_map import KeyIdMap
 
 import workflow as w
+import time
+
+
+class Timer:
+    def __init__(self, message=None, items_cnt=None):
+        self.message = message
+        self.items_cnt = items_cnt
+        self.elapsed = 0
+
+    def __enter__(self):
+        self.start = time.perf_counter()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end = time.perf_counter()
+        self.elapsed = self.end - self.start
+        msg = self.message or f"Block execution"
+        if self.items_cnt is not None:
+            log_msg = f"{msg} time: {self.elapsed:.3f} seconds per {self.items_cnt} items  ({self.elapsed/self.items_cnt:.3f} seconds per item)"
+        else:
+            log_msg = f"{msg} time: {self.elapsed:.3f} seconds"
+        sly.logger.info(log_msg)
+
 
 if sly.is_development():
     print("go")
@@ -94,9 +117,9 @@ def export_only_labeled_items(api: sly.Api):
             for batch in sly.batched(images, batch_size=10):
                 image_ids = [image_info.id for image_info in batch]
                 image_names = [image_info.name for image_info in batch]
-
                 try:
-                    ann_infos = api.annotation.download_batch(dataset_id, image_ids)
+                    with Timer("Annotation downloading", len(image_ids)):
+                        ann_infos = api.annotation.download_batch(dataset_id, image_ids)
                     ann_jsons = [ann_info.annotation for ann_info in ann_infos]
                 except Exception as e:
                     sly.logger.warn(
@@ -106,7 +129,8 @@ def export_only_labeled_items(api: sly.Api):
 
                 if DOWNLOAD_ITEMS:
                     try:
-                        batch_imgs_bytes = api.image.download_bytes(dataset_id, image_ids)
+                        with Timer("Image downloading", len(image_ids)):
+                            batch_imgs_bytes = api.image.download_bytes(dataset_id, image_ids)
                     except Exception as e:
                         sly.logger.warn(
                             f"Can not download {len(image_ids)} images from dataset {dataset_info.name}: {repr(e)}. Skip batch."
