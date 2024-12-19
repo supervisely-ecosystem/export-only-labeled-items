@@ -93,11 +93,9 @@ def export_only_labeled_items(api: sly.Api):
 
             ids = [info.id for info in images]
             img_names = [info.name for info in images]
-            ann_progress = Progress("Downloading annotations...", total_items_cnt)
+            ann_progress = sly.tqdm_sly(desc="Downloading annotations", total=total_items_cnt)
             try:
-                coro = api.annotation.download_bulk_async(
-                    dataset_id, ids, ann_progress.iters_done_report
-                )
+                coro = api.annotation.download_bulk_async(dataset_id, ids, ann_progress)
                 loop = sly.utils.get_or_create_event_loop()
                 if loop.is_running():
                     future = asyncio.run_coroutine_threadsafe(coro, loop)
@@ -112,13 +110,9 @@ def export_only_labeled_items(api: sly.Api):
                 continue
 
             if DOWNLOAD_ITEMS:
-                image_progress = Progress(
-                    "Downloading images...", total_items_cnt, min_report_percent=10
-                )
+                image_progress = sly.tqdm_sly(desc="Downloading images", total=total_items_cnt)
                 try:
-                    coro = api.image.download_bytes_many_async(
-                        ids, progress_cb=image_progress.iters_done_report
-                    )
+                    coro = api.image.download_bytes_many_async(ids, progress_cb=image_progress)
                     loop = sly.utils.get_or_create_event_loop()
                     if loop.is_running():
                         future = asyncio.run_coroutine_threadsafe(coro, loop)
@@ -126,29 +120,26 @@ def export_only_labeled_items(api: sly.Api):
                     else:
                         img_bytes_many = loop.run_until_complete(coro)
 
-                    ds_progress = sly.Progress(
-                        f"Processing dataset items...: {dataset_info.name}",
-                        len(img_bytes_many),
-                        min_report_percent=10,
+                    ds_progress = sly.tqdm_sly(
+                        desc=f"Processing dataset {dataset_info.name} items",
+                        total=len(img_bytes_many),
                     )
                     for name, img_bytes, ann_json in zip(img_names, img_bytes_many, ann_jsons):
                         ann = sly.Annotation.from_json(ann_json, meta)
                         if ann.is_empty():
                             not_labeled_items_cnt += 1
-                            ds_progress.iter_done_report()
+                            ds_progress(1)
                             continue
                         dataset_fs.add_item_raw_bytes(name, img_bytes, ann_json)
-                        ds_progress.iter_done_report()
+                        ds_progress(1)
                 except:
                     sly.logger.warning(
                         f"Can not download {total_items_cnt} images from dataset {dataset_info.name}: {repr(e)}. Skip batch."
                     )
                     continue
             else:
-                ds_progress = sly.Progress(
-                    f"Processing dataset items...: {dataset_info.name}",
-                    len(img_names),
-                    min_report_percent=10,
+                ds_progress = sly.tqdm_sly(
+                    desc=f"Processing dataset {dataset_info.name} items", total=len(img_names)
                 )
                 ann_dir = os.path.join(RESULT_DIR, dataset_info.name, "ann")
                 sly.fs.mkdir(ann_dir)
@@ -156,10 +147,10 @@ def export_only_labeled_items(api: sly.Api):
                     ann = sly.Annotation.from_json(ann_json, meta)
                     if ann.is_empty():
                         not_labeled_items_cnt += 1
-                        ds_progress.iter_done_report()
+                        ds_progress(1)
                         continue
                     sly.json.dump_json_file(ann_json, os.path.join(ann_dir, image_name + ".json"))
-                    ds_progress.iter_done_report()
+                    ds_progress(1)
 
             if total_items_cnt == not_labeled_items_cnt:
                 sly.logger.warning(
@@ -183,13 +174,13 @@ def export_only_labeled_items(api: sly.Api):
             video_ids = [video_info.id for video_info in videos]
             video_names = [video_info.name for video_info in videos]
             try:
-                video_ann_progress = Progress(
-                    "Downloading video annotations...", total_items_cnt, min_report_percent=10
+                video_ann_progress = sly.tqdm_sly(
+                    desc="Downloading video annotations", total=total_items_cnt
                 )
 
                 coro = api.video.annotation.download_bulk_async(
-                    video_ids, progress_cb=video_ann_progress.iters_done_report
-                )  # ! not implemented yet
+                    video_ids, progress_cb=video_ann_progress
+                )
                 loop = sly.utils.get_or_create_event_loop()
                 if loop.is_running():
                     future = asyncio.run_coroutine_threadsafe(coro, loop)
@@ -220,10 +211,10 @@ def export_only_labeled_items(api: sly.Api):
                 )
             video_ids = [video_ids[i] for i in labeled_ids]
             if len(video_paths) == len(video_ids) and len(video_paths) != 0:
-                progress = Progress("Downloading videos...", len(video_ids))
+                progress = sly.tqdm_sly(desc="Downloading videos", total=len(video_ids))
                 try:
                     coro = api.video.download_paths_async(
-                        video_ids, video_paths, progress_cb=progress.iters_done_report
+                        video_ids, video_paths, progress_cb=progress
                     )
                     loop = sly.utils.get_or_create_event_loop()
                     if loop.is_running():
@@ -263,12 +254,10 @@ def export_only_labeled_items(api: sly.Api):
 
             anns_json = []
             try:
-                ann_progress = Progress(
-                    "Downloading annotations...", total_items_cnt, min_report_percent=10
-                )
+                ann_progress = sly.tqdm_sly(desc="Downloading annotations", total=total_items_cnt)
                 coro = api.pointcloud.annotation.download_bulk_async(
-                    pointcloud_ids, progress_cb=ann_progress.iters_done_report
-                )  # ! not implemented yet
+                    pointcloud_ids, progress_cb=ann_progress
+                )
                 loop = sly.utils.get_or_create_event_loop()
                 if loop.is_running():
                     future = asyncio.run_coroutine_threadsafe(coro, loop)
@@ -281,12 +270,12 @@ def export_only_labeled_items(api: sly.Api):
                 )
                 continue
             if DOWNLOAD_ITEMS:
-                pcd_progress = Progress(
-                    "Downloading point clouds...", len(pointcloud_ids), min_report_percent=10
+                pcd_progress = sly.tqdm_sly(
+                    desc="Downloading point clouds", total=len(pointcloud_ids)
                 )
                 try:
                     coro = api.pointcloud.download_paths_async(
-                        pointcloud_ids, pcd_file_paths, progress_cb=pcd_progress.iters_done_report
+                        pointcloud_ids, pcd_file_paths, progress_cb=pcd_progress
                     )
                     loop = sly.utils.get_or_create_event_loop()
                     if loop.is_running():
@@ -304,9 +293,8 @@ def export_only_labeled_items(api: sly.Api):
                 rimage_ids = []
                 for pcd_id, pcd_name in zip(pointcloud_ids, pointcloud_names):
                     rimage_path = dataset_fs.get_related_images_path(pcd_name)
-                    rimage_info = api.pointcloud.get_list_related_images(pcd_id)[
-                        0
-                    ]  # ? only one related image
+                    # only one related image for each pointcloud
+                    rimage_info = api.pointcloud.get_list_related_images(pcd_id)[0]
                     name = rimage_info[ApiField.NAME]
                     rimage_ids.append(rimage_info[ApiField.ID])
                     rimage_paths.append(os.path.join(rimage_path, name))
@@ -314,11 +302,11 @@ def export_only_labeled_items(api: sly.Api):
                     sly.fs.mkdir(rimage_path)
                     dump_json_file(rimage_info, path_json)
                 try:
-                    ri_progress = Progress(
-                        "Downloading related images...", len(rimage_ids), min_report_percent=10
+                    ri_progress = sly.tqdm_sly(
+                        desc="Downloading related images", total=len(rimage_ids)
                     )
                     coro = api.pointcloud.download_related_images_async(
-                        rimage_ids, rimage_paths, progress_cb=ri_progress.iters_done_report
+                        rimage_ids, rimage_paths, progress_cb=ri_progress
                     )
                     loop = sly.utils.get_or_create_event_loop()
                     if loop.is_running():
@@ -332,10 +320,8 @@ def export_only_labeled_items(api: sly.Api):
                     )
                     continue
 
-            ds_progress = sly.Progress(
-                f"Processing dataset items...",
-                len(pointcloud_names),
-                min_report_percent=10,
+            ds_progress = sly.tqdm_sly(
+                desc=f"Processing dataset items", total=len(pointcloud_names)
             )
             for pcd_path, pointcloud_name, ann_json in zip(
                 pcd_file_paths, pointcloud_names, anns_json
@@ -350,7 +336,7 @@ def export_only_labeled_items(api: sly.Api):
                     ann=pc_ann,
                     _validate_item=False,
                 )
-                ds_progress.iter_done_report()
+                ds_progress(1)
             if total_items_cnt == not_labeled_items_cnt:
                 sly.logger.warning(
                     "There are no labeled items in dataset {}".format(dataset_info.name)
