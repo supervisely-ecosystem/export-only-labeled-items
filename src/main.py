@@ -64,7 +64,7 @@ def filter_unlabeled_items(
     int,
     List[sly.Annotation],
 ]:
-    """Creates new lists of items and annotations that are not empty.
+    """Creates new lists of labeled items and annotations.
 
     Returns Tuple of filtered:
      - list of annotations
