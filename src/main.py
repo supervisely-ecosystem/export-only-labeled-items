@@ -2,7 +2,7 @@ import asyncio
 import os
 from datetime import datetime
 from distutils import util
-from typing import List
+from typing import Dict, List, Literal, Optional, Tuple
 
 import supervisely as sly
 from dotenv import load_dotenv
@@ -49,6 +49,63 @@ else:
     DOWNLOAD_ITEMS = bool(util.strtobool(os.environ["modal.state.items"]))
 
 
+def filter_unlabeled_items(
+    item_type: Literal["image", "video", "pointcloud"],
+    meta: sly.ProjectMeta,
+    ann_jsons: List[dict],
+    items_ids: List[int],
+    items_names: List[str],
+    not_labeled_items_cnt: int,
+    key_id_map: Optional[KeyIdMap] = None,  # for video and pointcloud projects
+) -> Tuple[
+    List[Dict],
+    List[int],
+    List[str],
+    int,
+    List[sly.Annotation],
+]:
+    """Creates new lists of items and annotations that are not empty.
+
+    Returns Tuple of filtered:
+     - list of annotations
+     - list of item IDs
+     - list of item names
+     - number of not labeled items
+     - list of annotations objects
+    """
+    ds_progress = sly.tqdm_sly(
+        desc=f"Filter unlabeled items",
+        total=len(ann_jsons),
+    )
+    ann_jsons_filtered = []
+    item_ids_filtered = []
+    item_names_filtered = []
+    ann_objects = []
+    for idx, ann_json in enumerate(ann_jsons):
+        if item_type == "image":
+            ann = sly.Annotation.from_json(ann_json, meta)
+        elif item_type == "video":
+            ann = sly.VideoAnnotation.from_json(ann_json, meta, key_id_map)
+        elif item_type == "pointcloud":
+            ann = sly.PointcloudAnnotation.from_json(ann_json, meta, key_id_map)
+        if ann.is_empty():
+            not_labeled_items_cnt += 1
+        else:
+            ann_objects.append(ann)
+            ann_jsons_filtered.append(ann_json)
+            item_ids_filtered.append(items_ids[idx])
+            item_names_filtered.append(items_names[idx])
+        ds_progress(1)
+    sly.logger.info(f"Labeled items to download: {len(ann_jsons_filtered)}")
+    return (
+        ann_jsons_filtered,
+        item_ids_filtered,
+        item_names_filtered,
+        not_labeled_items_cnt,
+        ann_objects,
+    )
+
+
 def export_only_labeled_items(api: sly.Api):
     project = api.project.get_info_by_id(project_id)
     if project is None:
@@ -82,6 +139,7 @@ def export_only_labeled_items(api: sly.Api):
         project_fs = Project(RESULT_DIR, OpenMode.CREATE)
         project_fs.set_meta(meta)
         for parents, dataset_info in api.dataset.tree(project_id):
+            sly.logger.info(f"Processing dataset {dataset_info.name}...")
             dataset_path = sly.Dataset._get_dataset_path(dataset_info.name, parents)
             dataset_id = dataset_info.id
             dataset_fs = project_fs.create_dataset(dataset_info.name, dataset_path)
@@ -105,14 +163,32 @@ def export_only_labeled_items(api: sly.Api):
                 ann_jsons = [ann_info.annotation for ann_info in anns]
             except Exception as e:
                 sly.logger.warning(
-                    f"Can not download {total_items_cnt} annotations from dataset {dataset_info.name}: {repr(e)}. Skip batch."
+                    f"Can not download {total_items_cnt} annotations from dataset {dataset_info.name}: {repr(e)}. Skipping."
                 )
                 continue
 
+            (
+                ann_jsons_filtered,
+                item_ids_filtered,
+                item_names_filtered,
+                not_labeled_items_cnt,
+                _,
+            ) = filter_unlabeled_items(
+                "image",
+                meta,
+                ann_jsons,
+                ids,
+                img_names,
+                not_labeled_items_cnt,
+            )
             if DOWNLOAD_ITEMS:
-                image_progress = sly.tqdm_sly(desc="Downloading images", total=total_items_cnt)
+                image_progress = sly.tqdm_sly(
+                    desc="Downloading images", total=len(ann_jsons_filtered)
+                )
                 try:
-                    coro = api.image.download_bytes_many_async(ids, progress_cb=image_progress)
+                    coro = api.image.download_bytes_many_async(
+                        item_ids_filtered, progress_cb=image_progress
+                    )
                     loop = sly.utils.get_or_create_event_loop()
                     if loop.is_running():
                         future = asyncio.run_coroutine_threadsafe(coro, loop)
@@ -121,34 +197,26 @@ def export_only_labeled_items(api: sly.Api):
                         img_bytes_many = loop.run_until_complete(coro)
 
                     ds_progress = sly.tqdm_sly(
-                        desc=f"Processing dataset {dataset_info.name} items",
+                        desc=f"Processing dataset items",
                         total=len(img_bytes_many),
                     )
-                    for name, img_bytes, ann_json in zip(img_names, img_bytes_many, ann_jsons):
-                        ann = sly.Annotation.from_json(ann_json, meta)
-                        if ann.is_empty():
-                            not_labeled_items_cnt += 1
-                            ds_progress(1)
-                            continue
+                    for name, img_bytes, ann_json in zip(
+                        item_names_filtered, img_bytes_many, ann_jsons_filtered
+                    ):
                         dataset_fs.add_item_raw_bytes(name, img_bytes, ann_json)
                         ds_progress(1)
                 except:
                     sly.logger.warning(
-                        f"Can not download {total_items_cnt} images from dataset {dataset_info.name}: {repr(e)}. Skip batch."
+                        f"Can not download {total_items_cnt} images from dataset {dataset_info.name}: {repr(e)}. Skipping."
                     )
                     continue
             else:
                 ds_progress = sly.tqdm_sly(
-                    desc=f"Processing dataset {dataset_info.name} items", total=len(img_names)
+                    desc=f"Processing dataset items", total=len(item_names_filtered)
                 )
                 ann_dir = os.path.join(RESULT_DIR, dataset_info.name, "ann")
                 sly.fs.mkdir(ann_dir)
-                for image_name, ann_json in zip(img_names, ann_jsons):
-                    ann = sly.Annotation.from_json(ann_json, meta)
-                    if ann.is_empty():
-                        not_labeled_items_cnt += 1
-                        ds_progress(1)
-                        continue
+                for image_name, ann_json in zip(item_names_filtered, ann_jsons_filtered):
                     sly.json.dump_json_file(ann_json, os.path.join(ann_dir, image_name + ".json"))
                     ds_progress(1)
 
@@ -189,32 +257,32 @@ def export_only_labeled_items(api: sly.Api):
                     ann_jsons = loop.run_until_complete(coro)
             except Exception as e:
                 sly.logger.warning(
-                    f"Can not download {len(video_ids)} annotations: {repr(e)}. Skip batch."
+                    f"Can not download {len(video_ids)} annotations: {repr(e)}. Skipping."
                 )
                 continue
-            video_paths = []
-            labeled_ids = []
-            for i, (video_name, ann_json) in enumerate(zip(video_names, ann_jsons)):
-                video_ann = sly.VideoAnnotation.from_json(ann_json, meta, key_id_map)
-                if not video_ann.is_empty():
-                    labeled_ids.append(i)
-                else:
-                    not_labeled_items_cnt += 1
-                    continue
 
-                video_path = None
-                if DOWNLOAD_ITEMS:
-                    video_path = dataset_fs.generate_item_path(video_name)
-                    video_paths.append(video_path)
-                dataset_fs.add_item_file(
-                    video_name, video_path, ann=video_ann, _validate_item=False
-                )
-            video_ids = [video_ids[i] for i in labeled_ids]
-            if len(video_paths) == len(video_ids) and len(video_paths) != 0:
-                progress = sly.tqdm_sly(desc="Downloading videos", total=len(video_ids))
+            (
+                ann_jsons_filtered,
+                video_ids_filtered,
+                video_names_filtered,
+                not_labeled_items_cnt,
+                video_anns,
+            ) = filter_unlabeled_items(
+                "video",
+                meta,
+                ann_jsons,
+                video_ids,
+                video_names,
+                not_labeled_items_cnt,
+                key_id_map,
+            )
+            video_paths = [dataset_fs.generate_item_path(name) for name in video_names_filtered]
+
+            if DOWNLOAD_ITEMS:
+                progress = sly.tqdm_sly(desc="Downloading videos", total=len(video_ids_filtered))
                 try:
                     coro = api.video.download_paths_async(
-                        video_ids, video_paths, progress_cb=progress
+                        video_ids_filtered, video_paths, progress_cb=progress
                     )
                     loop = sly.utils.get_or_create_event_loop()
                     if loop.is_running():
@@ -226,7 +294,14 @@ def export_only_labeled_items(api: sly.Api):
                     sly.logger.warning(
                         f"An error occured while downloading videos. Error: {repr(e)}"
                     )
-
+            ds_progress = sly.tqdm_sly(desc=f"Processing dataset items", total=len(video_anns))
+            for video_name, video_path, video_ann in zip(
+                video_names_filtered, video_paths, video_anns
+            ):
+                dataset_fs.add_item_file(
+                    video_name, video_path, ann=video_ann, _validate_item=False
+                )
+                ds_progress(1)
             if total_items_cnt == not_labeled_items_cnt:
                 sly.logger.warning(
                     "There are no labeled items in dataset {}".format(dataset_info.name)
@@ -250,7 +325,6 @@ def export_only_labeled_items(api: sly.Api):
 
             pointcloud_ids = [pointcloud_info.id for pointcloud_info in pointclouds]
             pointcloud_names = [pointcloud_info.name for pointcloud_info in pointclouds]
-            pcd_file_paths = [dataset_fs.generate_item_path(name) for name in pointcloud_names]
 
             anns_json = []
             try:
@@ -266,16 +340,34 @@ def export_only_labeled_items(api: sly.Api):
                     anns_json.extend(loop.run_until_complete(coro))
             except Exception as e:
                 sly.logger.warning(
-                    f"Can not download {total_items_cnt} annotations from dataset {dataset_info.name}: {repr(e)}. Skip batch."
+                    f"Can not download {total_items_cnt} annotations from dataset {dataset_info.name}: {repr(e)}. Skipping."
                 )
                 continue
+
+            (
+                _,
+                pcd_ids_filtered,
+                pcd_names_filtered,
+                not_labeled_items_cnt,
+                ann_objects,
+            ) = filter_unlabeled_items(
+                "pointcloud",
+                meta,
+                anns_json,
+                pointcloud_ids,
+                pointcloud_names,
+                not_labeled_items_cnt,
+                key_id_map,
+            )
+
+            pcd_file_paths = [dataset_fs.generate_item_path(name) for name in pcd_names_filtered]
             if DOWNLOAD_ITEMS:
                 pcd_progress = sly.tqdm_sly(
-                    desc="Downloading point clouds", total=len(pointcloud_ids)
+                    desc="Downloading point clouds", total=len(pcd_ids_filtered)
                 )
                 try:
                     coro = api.pointcloud.download_paths_async(
-                        pointcloud_ids, pcd_file_paths, progress_cb=pcd_progress
+                        pcd_ids_filtered, pcd_file_paths, progress_cb=pcd_progress
                     )
                     loop = sly.utils.get_or_create_event_loop()
                     if loop.is_running():
@@ -291,7 +383,10 @@ def export_only_labeled_items(api: sly.Api):
 
                 rimage_paths = []
                 rimage_ids = []
-                for pcd_id, pcd_name in zip(pointcloud_ids, pointcloud_names):
+                dri_progress = sly.tqdm_sly(
+                    desc="Dumping related images infos", total=len(pcd_ids_filtered)
+                )
+                for pcd_id, pcd_name in zip(pcd_ids_filtered, pcd_names_filtered):
                     rimage_path = dataset_fs.get_related_images_path(pcd_name)
                     # only one related image for each pointcloud
                     rimage_info = api.pointcloud.get_list_related_images(pcd_id)[0]
@@ -301,6 +396,7 @@ def export_only_labeled_items(api: sly.Api):
                     path_json = os.path.join(rimage_path, name + ".json")
                     sly.fs.mkdir(rimage_path)
                     dump_json_file(rimage_info, path_json)
+                    dri_progress(1)
                 try:
                     ri_progress = sly.tqdm_sly(
                         desc="Downloading related images", total=len(rimage_ids)
@@ -321,15 +417,11 @@ def export_only_labeled_items(api: sly.Api):
                     continue
 
             ds_progress = sly.tqdm_sly(
-                desc=f"Processing dataset items", total=len(pointcloud_names)
+                desc=f"Processing dataset items", total=len(pcd_names_filtered)
             )
-            for pcd_path, pointcloud_name, ann_json in zip(
-                pcd_file_paths, pointcloud_names, anns_json
+            for pcd_path, pointcloud_name, pc_ann in zip(
+                pcd_file_paths, pcd_names_filtered, ann_objects
             ):
-                pc_ann = sly.PointcloudAnnotation.from_json(ann_json, meta, key_id_map)
-                if pc_ann.is_empty():
-                    not_labeled_items_cnt += 1
-                    continue
                 dataset_fs.add_item_file(
                     pointcloud_name,
                     pcd_path,
