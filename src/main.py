@@ -187,7 +187,9 @@ def export_only_labeled_items(api: sly.Api):
                     "Downloading video annotations...", total_items_cnt, min_report_percent=10
                 )
 
-                coro = api.video.annotation.download_bulk_async(video_ids)  # ! not implemented yet
+                coro = api.video.annotation.download_bulk_async(
+                    video_ids, progress_cb=video_ann_progress.iters_done_report
+                )  # ! not implemented yet
                 loop = sly.utils.get_or_create_event_loop()
                 if loop.is_running():
                     future = asyncio.run_coroutine_threadsafe(coro, loop)
@@ -199,7 +201,6 @@ def export_only_labeled_items(api: sly.Api):
                     f"Can not download {len(video_ids)} annotations: {repr(e)}. Skip batch."
                 )
                 continue
-            video_ann_progress.iters_done_report(len(video_ids))
             video_paths = []
             labeled_ids = []
             for i, (video_name, ann_json) in enumerate(zip(video_names, ann_jsons)):
@@ -219,7 +220,7 @@ def export_only_labeled_items(api: sly.Api):
                 )
             video_ids = [video_ids[i] for i in labeled_ids]
             if len(video_paths) == len(video_ids) and len(video_paths) != 0:
-                progress = Progress("Downloading videos", len(video_ids))
+                progress = Progress("Downloading videos...", len(video_ids))
                 try:
                     coro = api.video.download_paths_async(
                         video_ids, video_paths, progress_cb=progress.iters_done_report
@@ -266,7 +267,7 @@ def export_only_labeled_items(api: sly.Api):
                     "Downloading annotations...", total_items_cnt, min_report_percent=10
                 )
                 coro = api.pointcloud.annotation.download_bulk_async(
-                    pointcloud_ids
+                    pointcloud_ids, progress_cb=ann_progress.iters_done_report
                 )  # ! not implemented yet
                 loop = sly.utils.get_or_create_event_loop()
                 if loop.is_running():
@@ -279,12 +280,13 @@ def export_only_labeled_items(api: sly.Api):
                     f"Can not download {total_items_cnt} annotations from dataset {dataset_info.name}: {repr(e)}. Skip batch."
                 )
                 continue
-            ann_progress.iters_done_report(len(pointcloud_ids))
             if DOWNLOAD_ITEMS:
+                pcd_progress = Progress(
+                    "Downloading point clouds...", len(pointcloud_ids), min_report_percent=10
+                )
                 try:
                     coro = api.pointcloud.download_paths_async(
-                        pointcloud_ids,
-                        pcd_file_paths,
+                        pointcloud_ids, pcd_file_paths, progress_cb=pcd_progress.iters_done_report
                     )
                     loop = sly.utils.get_or_create_event_loop()
                     if loop.is_running():
@@ -302,14 +304,22 @@ def export_only_labeled_items(api: sly.Api):
                 rimage_ids = []
                 for pcd_id, pcd_name in zip(pointcloud_ids, pointcloud_names):
                     rimage_path = dataset_fs.get_related_images_path(pcd_name)
-                    rimage_info = api.pointcloud.get_list_related_images(pcd_id)
+                    rimage_info = api.pointcloud.get_list_related_images(pcd_id)[
+                        0
+                    ]  # ? only one related image
                     name = rimage_info[ApiField.NAME]
                     rimage_ids.append(rimage_info[ApiField.ID])
                     rimage_paths.append(os.path.join(rimage_path, name))
                     path_json = os.path.join(rimage_path, name + ".json")
+                    sly.fs.mkdir(rimage_path)
                     dump_json_file(rimage_info, path_json)
                 try:
-                    coro = api.pointcloud.download_related_images_async(rimage_ids, rimage_paths)
+                    ri_progress = Progress(
+                        "Downloading related images...", len(rimage_ids), min_report_percent=10
+                    )
+                    coro = api.pointcloud.download_related_images_async(
+                        rimage_ids, rimage_paths, progress_cb=ri_progress.iters_done_report
+                    )
                     loop = sly.utils.get_or_create_event_loop()
                     if loop.is_running():
                         future = asyncio.run_coroutine_threadsafe(coro, loop)
@@ -322,6 +332,11 @@ def export_only_labeled_items(api: sly.Api):
                     )
                     continue
 
+            ds_progress = sly.Progress(
+                f"Processing dataset items...",
+                len(pointcloud_names),
+                min_report_percent=10,
+            )
             for pcd_path, pointcloud_name, ann_json in zip(
                 pcd_file_paths, pointcloud_names, anns_json
             ):
@@ -335,6 +350,7 @@ def export_only_labeled_items(api: sly.Api):
                     ann=pc_ann,
                     _validate_item=False,
                 )
+                ds_progress.iter_done_report()
             if total_items_cnt == not_labeled_items_cnt:
                 sly.logger.warning(
                     "There are no labeled items in dataset {}".format(dataset_info.name)
