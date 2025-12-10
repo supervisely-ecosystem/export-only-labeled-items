@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 from supervisely.api.module_api import ApiField
 from supervisely.io.json import dump_json_file
 from supervisely.project.pointcloud_project import PointcloudDataset, PointcloudProject
-from supervisely.project.project import OpenMode, Progress, Project
+from supervisely.project.project import OpenMode, Project
+from supervisely.task.progress import Progress
 from supervisely.project.video_project import VideoProject
 from supervisely.video_annotation.key_id_map import KeyIdMap
 
