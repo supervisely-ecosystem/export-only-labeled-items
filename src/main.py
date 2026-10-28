@@ -135,6 +135,7 @@ def export_only_labeled_items(api: sly.Api):
 
     sly.fs.mkdir(RESULT_DIR, True)
     sly.logger.info("Export folder has been created")
+    exported_items_cnt = 0
 
     if project.type == str(sly.ProjectType.IMAGES):
         project_fs = Project(RESULT_DIR, OpenMode.CREATE)
@@ -181,6 +182,7 @@ def export_only_labeled_items(api: sly.Api):
                 img_names,
                 not_labeled_items_cnt,
             )
+            exported_items_cnt += len(item_ids_filtered)
             if DOWNLOAD_ITEMS:
                 image_progress = sly.tqdm_sly(
                     desc="Downloading images", total=len(ann_jsons_filtered)
@@ -274,6 +276,7 @@ def export_only_labeled_items(api: sly.Api):
                 not_labeled_items_cnt,
                 key_id_map,
             )
+            exported_items_cnt += len(video_ids_filtered)
             video_paths = [dataset_fs.generate_item_path(name) for name in video_names_filtered]
 
             if DOWNLOAD_ITEMS:
@@ -359,6 +362,7 @@ def export_only_labeled_items(api: sly.Api):
                 not_labeled_items_cnt,
                 key_id_map,
             )
+            exported_items_cnt += len(pcd_ids_filtered)
 
             pcd_file_paths = [dataset_fs.generate_item_path(name) for name in pcd_names_filtered]
             if DOWNLOAD_ITEMS:
@@ -436,6 +440,12 @@ def export_only_labeled_items(api: sly.Api):
                     f"Dataset {dataset_info.name} has {total_items_cnt-not_labeled_items_cnt}/{total_items_cnt} items labeled"
                 )
         project_fs.set_key_id_map(key_id_map)
+
+    if exported_items_cnt == 0:
+        raise RuntimeError(
+            f"Project '{project_name}' has no labeled items: nothing to export. "
+            "An item counts as labeled when it has at least one object or tag."
+        )
 
     dir_size = sly.fs.get_directory_size(RESULT_PROJECT_DIR)
     dir_size_gb = round(dir_size / (1024 * 1024 * 1024), 2)
