@@ -234,8 +234,9 @@ def export_only_labeled_items(api: sly.Api):
         key_id_map = KeyIdMap()
         project_fs = VideoProject(RESULT_DIR, OpenMode.CREATE)
         project_fs.set_meta(meta)
-        for dataset_info in api.dataset.get_list(project_id):
-            dataset_fs = project_fs.create_dataset(dataset_info.name)
+        for parents, dataset_info in api.dataset.tree(project_id):
+            dataset_path = sly.Dataset._get_dataset_path(dataset_info.name, parents)
+            dataset_fs = project_fs.create_dataset(dataset_info.name, dataset_path)
             videos = api.video.get_list(dataset_info.id)
             not_labeled_items_cnt = 0
             total_items_cnt = len(videos)
@@ -318,8 +319,11 @@ def export_only_labeled_items(api: sly.Api):
         key_id_map = KeyIdMap()
         project_fs = PointcloudProject(RESULT_DIR, OpenMode.CREATE)
         project_fs.set_meta(meta)
-        for dataset_info in api.dataset.get_list(project_id):
-            dataset_fs: PointcloudDataset = project_fs.create_dataset(dataset_info.name)
+        for parents, dataset_info in api.dataset.tree(project_id):
+            dataset_path = sly.Dataset._get_dataset_path(dataset_info.name, parents)
+            dataset_fs: PointcloudDataset = project_fs.create_dataset(
+                dataset_info.name, dataset_path
+            )
             pointclouds = api.pointcloud.get_list(dataset_info.id)
             not_labeled_items_cnt = 0
             total_items_cnt = len(pointclouds)
