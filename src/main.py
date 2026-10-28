@@ -33,6 +33,7 @@ SIZE_LIMIT = 10 if sly.is_community() else 100
 SIZE_LIMIT_BYTES = SIZE_LIMIT * (1024**3)
 SPLIT_MODE = "MB"
 SPLIT_SIZE = 500  # do not increase this value (memory issues)
+IMAGE_BATCH_SIZE = 200  # images held in memory at once
 RESULT_DIR_NAME = "export_only_labeled_items"
 DATA_DIR = os.path.join(os.getcwd(), "data")
 # endregion
@@ -187,26 +188,30 @@ def export_only_labeled_items(api: sly.Api):
                 image_progress = sly.tqdm_sly(
                     desc="Downloading images", total=len(ann_jsons_filtered)
                 )
+                ds_progress = sly.tqdm_sly(
+                    desc=f"Processing dataset items",
+                    total=len(item_ids_filtered),
+                )
                 try:
-                    coro = api.image.download_bytes_many_async(
-                        item_ids_filtered, progress_cb=image_progress
-                    )
-                    loop = sly.utils.get_or_create_event_loop()
-                    if loop.is_running():
-                        future = asyncio.run_coroutine_threadsafe(coro, loop)
-                        img_bytes_many = future.result()
-                    else:
-                        img_bytes_many = loop.run_until_complete(coro)
-
-                    ds_progress = sly.tqdm_sly(
-                        desc=f"Processing dataset items",
-                        total=len(img_bytes_many),
-                    )
-                    for name, img_bytes, ann_json in zip(
-                        item_names_filtered, img_bytes_many, ann_jsons_filtered
+                    # download and write in batches: holding a whole dataset in memory OOMs
+                    for batch in sly.batched(
+                        list(zip(item_ids_filtered, item_names_filtered, ann_jsons_filtered)),
+                        IMAGE_BATCH_SIZE,
                     ):
-                        dataset_fs.add_item_raw_bytes(name, img_bytes, ann_json)
-                        ds_progress(1)
+                        batch_ids = [image_id for image_id, _, _ in batch]
+                        coro = api.image.download_bytes_many_async(
+                            batch_ids, progress_cb=image_progress
+                        )
+                        loop = sly.utils.get_or_create_event_loop()
+                        if loop.is_running():
+                            future = asyncio.run_coroutine_threadsafe(coro, loop)
+                            img_bytes_many = future.result()
+                        else:
+                            img_bytes_many = loop.run_until_complete(coro)
+
+                        for (_, name, ann_json), img_bytes in zip(batch, img_bytes_many):
+                            dataset_fs.add_item_raw_bytes(name, img_bytes, ann_json)
+                            ds_progress(1)
                 except Exception as e:
                     raise RuntimeError(
                         f"Can not download {len(item_ids_filtered)} images from dataset '{dataset_info.name}'"

@@ -143,7 +143,7 @@ def run_app(tmp_path, monkeypatch):
     """Import src/main.py with the given modal state and run it on a fake project."""
     import supervisely as sly
 
-    def _run(project_type, datasets, meta_json, items=True, fail=None):
+    def _run(project_type, datasets, meta_json, items=True, fail=None, module_attrs=None):
         workdir = tmp_path / "work"
         workdir.mkdir(exist_ok=True)
         monkeypatch.chdir(workdir)
@@ -176,6 +176,8 @@ def run_app(tmp_path, monkeypatch):
         for mod in ("main", "workflow"):
             sys.modules.pop(mod, None)
         main = importlib.import_module("main")
+        for name, value in (module_attrs or {}).items():
+            monkeypatch.setattr(main, name, value)
 
         api = FakeApi(project_type, datasets, meta_json, fail=fail)
         result.api = api
