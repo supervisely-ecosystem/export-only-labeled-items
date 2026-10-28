@@ -215,10 +215,9 @@ def export_only_labeled_items(api: sly.Api):
                 ds_progress = sly.tqdm_sly(
                     desc=f"Processing dataset items", total=len(item_names_filtered)
                 )
-                ann_dir = os.path.join(RESULT_DIR, dataset_info.name, "ann")
-                sly.fs.mkdir(ann_dir)
                 for image_name, ann_json in zip(item_names_filtered, ann_jsons_filtered):
-                    sly.json.dump_json_file(ann_json, os.path.join(ann_dir, image_name + ".json"))
+                    ann_path = os.path.join(dataset_fs.ann_dir, image_name + ".json")
+                    sly.json.dump_json_file(ann_json, ann_path)
                     ds_progress(1)
 
             if total_items_cnt == not_labeled_items_cnt:
