@@ -392,14 +392,14 @@ def export_only_labeled_items(api: sly.Api):
                 )
                 for pcd_id, pcd_name in zip(pcd_ids_filtered, pcd_names_filtered):
                     rimage_path = dataset_fs.get_related_images_path(pcd_name)
-                    # only one related image for each pointcloud
-                    rimage_info = api.pointcloud.get_list_related_images(pcd_id)[0]
-                    name = rimage_info[ApiField.NAME]
-                    rimage_ids.append(rimage_info[ApiField.ID])
-                    rimage_paths.append(os.path.join(rimage_path, name))
-                    path_json = os.path.join(rimage_path, name + ".json")
-                    sly.fs.mkdir(rimage_path)
-                    dump_json_file(rimage_info, path_json)
+                    # a point cloud has zero, one or several related (photo context) images
+                    for rimage_info in api.pointcloud.get_list_related_images(pcd_id):
+                        name = rimage_info[ApiField.NAME]
+                        rimage_ids.append(rimage_info[ApiField.ID])
+                        rimage_paths.append(os.path.join(rimage_path, name))
+                        path_json = os.path.join(rimage_path, name + ".json")
+                        sly.fs.mkdir(rimage_path)
+                        dump_json_file(rimage_info, path_json)
                     dri_progress(1)
                 try:
                     ri_progress = sly.tqdm_sly(
