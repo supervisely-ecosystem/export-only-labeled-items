@@ -1,7 +1,6 @@
 import asyncio
 import os
 from datetime import datetime
-from distutils import util
 from typing import Dict, List, Literal, Optional, Tuple
 
 import supervisely as sly
@@ -40,6 +39,16 @@ DATA_DIR = os.path.join(os.getcwd(), "data")
 sly.fs.mkdir(DATA_DIR, remove_content_if_exists=True)
 
 
+def str_to_bool(value: str) -> bool:
+    """Same values as the removed distutils.util.strtobool."""
+    value = value.strip().lower()
+    if value in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    if value in ("n", "no", "f", "false", "off", "0"):
+        return False
+    raise ValueError(f"Invalid value of modal.state.items: {value!r}")
+
+
 try:
     os.environ["modal.state.items"]
 except KeyError:
@@ -48,7 +57,7 @@ except KeyError:
     )
     DOWNLOAD_ITEMS = True
 else:
-    DOWNLOAD_ITEMS = bool(util.strtobool(os.environ["modal.state.items"]))
+    DOWNLOAD_ITEMS = str_to_bool(os.environ["modal.state.items"])
 
 
 def filter_unlabeled_items(
