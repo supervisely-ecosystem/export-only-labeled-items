@@ -126,7 +126,7 @@ class FakeApi:
         return [dict(r) for r in self.items[pcd_id].get("rimages", [])]
 
     async def _download_rimages(self, ids, paths, progress_cb=None, **kwargs):
-        self._check("rimages")
+        self._check("rimages_download")
         self.calls.append(("rimages", list(ids)))
         for p in paths:
             os.makedirs(os.path.dirname(p), exist_ok=True)

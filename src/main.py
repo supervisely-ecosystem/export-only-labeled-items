@@ -163,10 +163,9 @@ def export_only_labeled_items(api: sly.Api):
                     anns = loop.run_until_complete(coro)
                 ann_jsons = [ann_info.annotation for ann_info in anns]
             except Exception as e:
-                sly.logger.warning(
-                    f"Can not download {total_items_cnt} annotations from dataset {dataset_info.name}: {repr(e)}. Skipping."
-                )
-                continue
+                raise RuntimeError(
+                    f"Can not download {total_items_cnt} annotations from dataset '{dataset_info.name}'"
+                ) from e
 
             (
                 ann_jsons_filtered,
@@ -206,11 +205,10 @@ def export_only_labeled_items(api: sly.Api):
                     ):
                         dataset_fs.add_item_raw_bytes(name, img_bytes, ann_json)
                         ds_progress(1)
-                except:
-                    sly.logger.warning(
-                        f"Can not download {total_items_cnt} images from dataset {dataset_info.name}: {repr(e)}. Skipping."
-                    )
-                    continue
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Can not download {len(item_ids_filtered)} images from dataset '{dataset_info.name}'"
+                    ) from e
             else:
                 ds_progress = sly.tqdm_sly(
                     desc=f"Processing dataset items", total=len(item_names_filtered)
@@ -257,10 +255,9 @@ def export_only_labeled_items(api: sly.Api):
                 else:
                     ann_jsons = loop.run_until_complete(coro)
             except Exception as e:
-                sly.logger.warning(
-                    f"Can not download {len(video_ids)} annotations: {repr(e)}. Skipping."
-                )
-                continue
+                raise RuntimeError(
+                    f"Can not download {len(video_ids)} annotations from dataset '{dataset_info.name}'"
+                ) from e
 
             (
                 ann_jsons_filtered,
@@ -292,9 +289,9 @@ def export_only_labeled_items(api: sly.Api):
                     else:
                         loop.run_until_complete(coro)
                 except Exception as e:
-                    sly.logger.warning(
-                        f"An error occured while downloading videos. Error: {repr(e)}"
-                    )
+                    raise RuntimeError(
+                        f"Can not download {len(video_ids_filtered)} videos from dataset '{dataset_info.name}'"
+                    ) from e
             ds_progress = sly.tqdm_sly(desc=f"Processing dataset items", total=len(video_anns))
             for video_name, video_path, video_ann in zip(
                 video_names_filtered, video_paths, video_anns
@@ -343,10 +340,9 @@ def export_only_labeled_items(api: sly.Api):
                 else:
                     anns_json.extend(loop.run_until_complete(coro))
             except Exception as e:
-                sly.logger.warning(
-                    f"Can not download {total_items_cnt} annotations from dataset {dataset_info.name}: {repr(e)}. Skipping."
-                )
-                continue
+                raise RuntimeError(
+                    f"Can not download {total_items_cnt} annotations from dataset '{dataset_info.name}'"
+                ) from e
 
             (
                 _,
@@ -380,10 +376,9 @@ def export_only_labeled_items(api: sly.Api):
                     else:
                         loop.run_until_complete(coro)
                 except Exception as e:
-                    sly.logger.warning(
-                        f"An error occured while downloading PCD items from dataset: {dataset_info.name}. Error: {repr(e)}"
-                    )
-                    continue
+                    raise RuntimeError(
+                        f"Can not download {len(pcd_ids_filtered)} point clouds from dataset '{dataset_info.name}'"
+                    ) from e
 
                 rimage_paths = []
                 rimage_ids = []
@@ -415,10 +410,9 @@ def export_only_labeled_items(api: sly.Api):
                     else:
                         loop.run_until_complete(coro)
                 except Exception as e:
-                    sly.logger.warning(
-                        f"An error occured while downloading PCD related images. Error: {repr(e)}"
-                    )
-                    continue
+                    raise RuntimeError(
+                        f"Can not download {len(rimage_ids)} related images from dataset '{dataset_info.name}'"
+                    ) from e
 
             ds_progress = sly.tqdm_sly(
                 desc=f"Processing dataset items", total=len(pcd_names_filtered)
